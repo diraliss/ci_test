@@ -160,12 +160,16 @@
                   <span>{{likes}}</span>
                 </div>
               </div>
-              <p class="card-text" v-for="comment in post.coments"> {{comment.user.personaname + ' - '}}<small class="text-muted">{{comment.text}}</small></p>
+              <p class="card-text" v-for="comment in post.comments">
+                  {{comment.id}} {{comment.user.personaname + ' - '}} <small>{{comment.text}}</small> <br>
+                  <small v-if="comment.parent_id" class="text-muted">is answer for {{comment.parent_id}}</small>
+                  <label for='commentParent'>answer to it</label>&nbsp<input type='radio' :value="comment.id" v-model="commentParent" id='commentParent'>
+              </p>
               <form class="form-inline">
                 <div class="form-group">
-                  <input type="text" class="form-control" id="addComment" v-model="commentText">
+                  <input type="text" class="form-control" id="commentMessage" v-model="commentText">
                 </div>
-                <button type="submit" class="btn btn-primary">Add comment</button>
+                <button type="submit" @click.prevent="addComment" class="btn btn-primary">Add comment</button>
               </form>
             </div>
           </div>

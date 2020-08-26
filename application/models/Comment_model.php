@@ -15,6 +15,8 @@ class Comment_model extends CI_Emerald_Model
     protected $user_id;
     /** @var int */
     protected $assing_id;
+    /** @var int|null */
+    protected $parent_id;
     /** @var string */
     protected $text;
 
@@ -27,6 +29,7 @@ class Comment_model extends CI_Emerald_Model
     protected $comments;
     protected $likes;
     protected $user;
+    protected $parent;
 
 
     /**
@@ -65,6 +68,25 @@ class Comment_model extends CI_Emerald_Model
     {
         $this->assing_id = $assing_id;
         return $this->save('assing_id', $assing_id);
+    }
+
+    /**
+     * @return int|null
+     */
+    public function get_parent_id(): ?int
+    {
+        return $this->parent_id;
+    }
+
+    /**
+     * @param int|null $parent_id
+     *
+     * @return bool
+     */
+    public function set_parent_id(?int $parent_id)
+    {
+        $this->parent_id = $parent_id;
+        return $this->save('parent_id', $parent_id);
     }
 
 
@@ -137,10 +159,17 @@ class Comment_model extends CI_Emerald_Model
     }
 
     /**
-     * @return mixed
+     * @return self[]
      */
     public function get_comments()
     {
+        if (empty($this->comments)) {
+            try {
+                $this->comments = self::get_all_by_parent_id($this->id);
+            } catch (\Exception $e) {
+                $this->comments = [];
+            }
+        }
         return $this->comments;
     }
 
@@ -159,6 +188,21 @@ class Comment_model extends CI_Emerald_Model
             }
         }
         return $this->user;
+    }
+
+    /**
+     * @return Comment_model
+     */
+    public function get_parent(): Comment_model
+    {
+        if (empty($this->parent) && !is_null($this->get_parent_id())) {
+            try {
+                $this->parent = new Comment_model($this->get_parent_id());
+            } catch (Exception $exception) {
+                $this->parent = new Comment_model();
+            }
+        }
+        return $this->parent;
     }
 
     function __construct($id = NULL)
@@ -192,14 +236,30 @@ class Comment_model extends CI_Emerald_Model
     }
 
     /**
-     * @param int $assting_id
+     * @param int $assign_id
      * @return self[]
      * @throws Exception
      */
-    public static function get_all_by_assign_id(int $assting_id)
+    public static function get_all_by_assign_id(int $assign_id)
     {
 
-        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where(['assign_id' => $assting_id])->orderBy('time_created','ASC')->many();
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id])->orderBy('time_created','ASC')->many();
+        $ret = [];
+        foreach ($data as $i)
+        {
+            $ret[] = (new self())->set($i);
+        }
+        return $ret;
+    }
+
+    /**
+     * @param int $parent_id
+     * @return self[]
+     * @throws Exception
+     */
+    public static function get_all_by_parent_id(int $parent_id)
+    {
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where(['parent_id' => $parent_id])->orderBy('time_created','ASC')->many();
         $ret = [];
         foreach ($data as $i)
         {
@@ -241,6 +301,7 @@ class Comment_model extends CI_Emerald_Model
             $o->text = $d->get_text();
 
             $o->user = User_model::preparation($d->get_user(),'main_page');
+            $o->parent_id = $d->get_parent_id();
 
             $o->likes = rand(0, 25);
 

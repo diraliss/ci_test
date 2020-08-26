@@ -12,6 +12,7 @@ var app = new Vue({
 		amount: 0,
 		likes: 0,
 		commentText: '',
+		commentParent: null,
 		packs: [
 			{
 				id: 1,
@@ -66,6 +67,19 @@ var app = new Vue({
 							$('#loginModal').modal('hide');
 						}, 500);
 					})
+			}
+		},
+		addComment: function () {
+			var self= this;
+			if(self.commentText !== ''){
+				let url = '/main_page/comment/'+ self.post.id;
+				if (self.commentParent !== null) {
+					url += '/comment/' + self.commentParent;
+				}
+
+				axios.post(url, {
+					message: self.commentText
+				})
 			}
 		},
 		fiilIn: function () {

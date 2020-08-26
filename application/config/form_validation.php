@@ -13,5 +13,5 @@ $config = array(
             'label' => 'Password',
             'rules' => 'required'
         ),
-    )
+    ),
 );
