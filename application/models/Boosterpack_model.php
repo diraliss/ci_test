@@ -111,6 +111,16 @@ class Boosterpack_model extends CI_Emerald_Model
         return $this;
     }
 
+    /**
+     * @param int $id
+     * @return boolean
+     */
+    public static function exist($id)
+    {
+        $count = App::get_ci()->s->from(self::CLASS_TABLE)->where('id', intval($id))->count();
+        return ($count > 0);
+    }
+
     public static function create(array $data)
     {
         App::get_ci()->s->from(self::CLASS_TABLE)->insert($data)->execute();
@@ -124,4 +134,17 @@ class Boosterpack_model extends CI_Emerald_Model
         return (App::get_ci()->s->get_affected_rows() > 0);
     }
 
+    public function get_bought_likes()
+    {
+        //обновление не выполняется! использовать только внутри конструкции с trans_begin!
+        $bank = $this->get_bank();
+        $price = $this->get_price();
+
+        $likes = random_int(1, $bank + $price);
+        $bank += ($price - $likes);
+
+        App::get_ci()->db->where('id', $this->get_id());
+        App::get_ci()->db->update('boosterpack', ['bank' => $bank]);
+        return $likes;
+    }
 }

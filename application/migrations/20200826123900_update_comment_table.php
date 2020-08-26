@@ -17,6 +17,6 @@ class Migration_Update_comment_table extends CI_Migration {
 
     public function down()
     {
-        $this->dbforge->drop_column('comment', 'column_to_drop');
+        $this->dbforge->drop_column('comment', 'parent_id');
     }
 }

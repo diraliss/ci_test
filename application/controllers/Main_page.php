@@ -18,6 +18,7 @@ class Main_page extends MY_Controller
         App::get_ci()->load->model('Post_model');
         App::get_ci()->load->model('Comment_model');
         App::get_ci()->load->model('Like_model');
+        App::get_ci()->load->model('Boosterpack_model');
 
         if (is_prod())
         {
@@ -150,9 +151,30 @@ class Main_page extends MY_Controller
         }
     }
 
-    public function buy_boosterpack(){
-        // todo: add money to user logic
-        return $this->response_success(['amount' => rand(1,55)]);
+    public function buy_boosterpack($id)
+    {
+        if (!User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+        $id = intval($id);
+        if (empty($id) || !Boosterpack_model::exist($id)) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
+        $user = User_model::get_user();
+        $boosterpack = new Boosterpack_model($id);
+
+        if ($user->get_wallet_balance() < $boosterpack->get_price()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_UNAVAILABLE);
+        }
+
+        $result = $user->buy_boosterpack($boosterpack);
+        if ($result) {
+            $user->reload();
+
+            return $this->response_success(['user' => User_model::preparation($user, 'default')]); // Обновляется поле balance и available_likes
+        } else {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_TRY_LATER);
+        }
     }
 
 
@@ -164,6 +186,11 @@ class Main_page extends MY_Controller
         if (empty($type) || is_null($id) || !intval($id)) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
+        $user = User_model::get_user();
+        if ($user->get_available_likes() <= 0) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_UNAVAILABLE);
+        }
+
         $object = null;
         switch ($type) {
             case 'post':

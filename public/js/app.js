@@ -125,18 +125,9 @@ var app = new Vue({
 			axios.get('/main_page/like/comment/' + id)
 		},
 		buyPack: function (id) {
-			var self= this;
-			axios.post('/main_page/buy_boosterpack', {
+			axios.post('/main_page/buy_boosterpack/' + id, {
 				id: id,
 			})
-				.then(function (response) {
-					self.amount = response.data.amount
-					if(self.amount !== 0){
-						setTimeout(function () {
-							$('#amountModal').modal('show');
-						}, 500);
-					}
-				})
 		}
 	}
 });

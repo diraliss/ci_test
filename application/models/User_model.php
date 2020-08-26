@@ -28,6 +28,8 @@ class User_model extends CI_Emerald_Model {
     protected $wallet_total_refilled;
     /** @var float */
     protected $wallet_total_withdrawn;
+    /** @var int */
+    protected $available_likes;
     /** @var string */
     protected $time_created;
     /** @var string */
@@ -131,6 +133,45 @@ class User_model extends CI_Emerald_Model {
     {
         $this->rights = $rights;
         return $this->save('rights', $rights);
+    }
+
+    /**
+     * @return int
+     */
+    public function get_available_likes(): int
+    {
+        return $this->available_likes;
+    }
+
+    /**
+     * @param int $available_likes
+     *
+     * @return bool
+     */
+    public function set_available_likes(int $available_likes)
+    {
+        $this->available_likes = $available_likes;
+        return $this->save('available_likes', $available_likes);
+    }
+    
+    /**
+     * @param int $likes
+     *
+     * @return bool
+     */
+    public function add_to_available_likes(int $likes)
+    {
+        $this->available_likes += $likes;
+        return $this->save('available_likes', $this->available_likes);
+    }
+
+    public function use_like()
+    {
+        //обновление не выполняется! использовать только внутри конструкции с trans_begin!
+        App::get_ci()->db->where('id', $this->get_id());
+        App::get_ci()->db->update('user', [
+            'available_likes' => $this->get_available_likes() - 1,
+        ]);
     }
 
     /**
@@ -310,6 +351,48 @@ class User_model extends CI_Emerald_Model {
     }
 
     /**
+     * @param Boosterpack_model $boosterpack
+     * @return false
+     */
+    public function buy_boosterpack($boosterpack)
+    {
+        App::get_ci()->load->database();
+        App::get_ci()->load->model('Transaction_model');
+        App::get_ci()->db->trans_begin();
+
+        try {
+            $price = $boosterpack->get_price();
+            $likes = $boosterpack->get_bought_likes();
+
+            App::get_ci()->db->where('id', $this->get_id());
+            App::get_ci()->db->update(self::CLASS_TABLE, [
+                'available_likes' => $this->get_available_likes() + $likes,
+                'wallet_balance' => $this->get_wallet_balance() - $price,
+                'wallet_total_withdrawn' => $this->get_wallet_total_withdrawn() + $price
+            ]);
+
+            App::get_ci()->db->insert('users_boosterpack', [
+                'user_id' => $this->get_id(),
+                'boosterpack_id' => $boosterpack->get_id(),
+                'added_likes' => $likes
+            ]);
+
+            if (App::get_ci()->db->trans_status() === FALSE) {
+                App::get_ci()->db->trans_rollback();
+                Transaction_model::add_wrong_output_transaction($this->get_id(), $price, ['boosterpack_id' => $boosterpack->get_id(), 'db_errors' => App::get_ci()->db->error()]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            App::get_ci()->db->trans_rollback();
+            Transaction_model::add_wrong_output_transaction($this->get_id(), $boosterpack->get_price(), ['boosterpack_id' => $boosterpack->get_id(), 'error_message' => $e->getMessage()]);
+            return false;
+        }
+        App::get_ci()->db->trans_commit();
+        Transaction_model::add_success_output_transaction($this->get_id(), $boosterpack->get_price());
+        return true;
+    }
+
+    /**
      * @return self[]
      * @throws Exception
      */
@@ -396,6 +479,7 @@ class User_model extends CI_Emerald_Model {
             $o->time_updated = $data->get_time_updated();
 
             $o->balance = $data->get_wallet_balance();
+            $o->available_likes = $data->get_available_likes();
         }
 
         return $o;

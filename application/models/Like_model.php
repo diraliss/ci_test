@@ -160,8 +160,25 @@ class Like_model extends CI_Emerald_Model
         if (!in_array($data['entity_type'], self::ENTITY_TYPES)) {
             throw new \Exception('Wrong entity type');
         }
-        App::get_ci()->s->from(self::CLASS_TABLE)->insert($data)->execute();
-        return new static(App::get_ci()->s->get_insert_id());
+
+        App::get_ci()->load->database();
+        App::get_ci()->db->trans_begin();
+
+        try {
+            $user = new User_model($data['user_id']);
+            $user->use_like();
+
+            $like_id = App::get_ci()->db->insert(self::CLASS_TABLE, $data);
+            if (App::get_ci()->db->trans_status() === FALSE) {
+                App::get_ci()->db->trans_rollback();
+                return new static();
+            }
+        } catch (\Exception $e) {
+            App::get_ci()->db->trans_rollback();
+            return new static();
+        }
+        App::get_ci()->db->trans_commit();
+        return new static($like_id);
     }
 
     public function delete()
