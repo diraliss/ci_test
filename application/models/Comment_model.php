@@ -26,9 +26,15 @@ class Comment_model extends CI_Emerald_Model
     protected $time_updated;
 
     // generated
+    /** @var Comment_model[] */
     protected $comments;
+    /** @var Like_model[] */
     protected $likes;
+    /** @var int */
+    protected $likes_count;
+    /** @var User_model */
     protected $user;
+    /** @var Comment_model */
     protected $parent;
 
 
@@ -151,11 +157,29 @@ class Comment_model extends CI_Emerald_Model
     // generated
 
     /**
-     * @return mixed
+     * @return Like_model[]
      */
     public function get_likes()
     {
+        if (empty($this->likes)) {
+            try {
+                $this->likes = Like_model::get_all_by_entity_id('comment', $this->id);
+            } catch (\Exception $e) {
+                $this->likes = [];
+            }
+        }
         return $this->likes;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_likes_count()
+    {
+        if (empty($this->likes_count)) {
+            $this->likes_count = Like_model::get_count_by_entity_id('comment', $this->id);
+        }
+        return $this->likes_count;
     }
 
     /**
@@ -269,6 +293,15 @@ class Comment_model extends CI_Emerald_Model
     }
 
     /**
+     * @param int $id
+     * @return boolean
+     */
+    public static function exist($id) {
+        $count = App::get_ci()->s->from(self::CLASS_TABLE)->where('id', intval($id))->count();
+        return ($count > 0);
+    }
+
+    /**
      * @param self|self[] $data
      * @param string $preparation
      * @return stdClass|stdClass[]
@@ -303,7 +336,7 @@ class Comment_model extends CI_Emerald_Model
             $o->user = User_model::preparation($d->get_user(),'main_page');
             $o->parent_id = $d->get_parent_id();
 
-            $o->likes = rand(0, 25);
+            $o->likes = $d->get_likes_count();
 
             $o->time_created = $d->get_time_created();
             $o->time_updated = $d->get_time_updated();

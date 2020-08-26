@@ -105,6 +105,7 @@ var app = new Vue({
 				.get('/main_page/get_post/' + id)
 				.then(function (response) {
 					self.post = response.data.post;
+					self.likes = 0;
 					if(self.post){
 						setTimeout(function () {
 							$('#postModal').modal('show');
@@ -112,14 +113,16 @@ var app = new Vue({
 					}
 				})
 		},
-		addLike: function (id) {
+		addPostLike: function (id) {
 			var self= this;
-			axios
-				.get('/main_page/like')
+			axios.get('/main_page/like/post/' + id)
 				.then(function (response) {
 					self.likes = response.data.likes;
 				})
-
+		},
+		addCommentLike: function (id) {
+			var self= this;
+			axios.get('/main_page/like/comment/' + id)
 		},
 		buyPack: function (id) {
 			var self= this;
