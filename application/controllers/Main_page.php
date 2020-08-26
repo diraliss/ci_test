@@ -17,6 +17,7 @@ class Main_page extends MY_Controller
         App::get_ci()->load->model('Login_model');
         App::get_ci()->load->model('Post_model');
         App::get_ci()->load->model('Comment_model');
+        App::get_ci()->load->model('Like_model');
 
         if (is_prod())
         {
@@ -73,16 +74,12 @@ class Main_page extends MY_Controller
             return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
 
-        try {
-            $post = new Post_model($post_id);
-        } catch (EmeraldModelNoDataException $ex) {
+        if (!Post_model::exist($post_id)) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
         }
 
         if ($type == 'comment') {
-            try {
-                $parent = new Comment_model($parent_id);
-            } catch (EmeraldModelNoDataException $ex) {
+            if (!Comment_model::exist($parent_id)) {
                 return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
             }
         }
@@ -138,9 +135,41 @@ class Main_page extends MY_Controller
     }
 
 
-    public function like(){
-        // todo: add like post\comment logic
-        return $this->response_success(['likes' => rand(1,55)]); // Колво лайков под постом \ комментарием чтобы обновить
+    public function like($type = 'post', $id = null)
+    {
+        if (!User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+        if (empty($type) || is_null($id) || !intval($id)) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
+        $object = null;
+        switch ($type) {
+            case 'post':
+                if (!Post_model::exist($id)) {
+                    return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
+                } else {
+                    $object = new Post_model($id);
+                }
+                break;
+            case 'comment':
+                if (!Comment_model::exist($id)) {
+                    return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
+                } else {
+                    $object = new Comment_model($id);
+                }
+                break;
+            default:
+                return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
+        Like_model::create([
+            'user_id' => User_model::get_session_id(),
+            'entity_type' => $type,
+            'entity_id' => $id
+        ]);
+        $object->reload();
+
+        return $this->response_success(['likes' => $object->get_likes_count()]); // Кол-во лайков под постом \ комментарием чтобы обновить
     }
 
 }
