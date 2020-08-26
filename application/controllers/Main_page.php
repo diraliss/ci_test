@@ -84,23 +84,25 @@ class Main_page extends MY_Controller
     }
 
 
-    public function login($user_id)
+    public function login()
     {
-        // Right now for tests:
-        $post_id = intval($user_id);
+        App::get_ci()->load->library('form_validation');
 
-        if (empty($post_id)){
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        $data = json_decode(App::get_ci()->security->xss_clean(App::get_ci()->input->raw_input_stream), true);
+
+        App::get_ci()->form_validation->set_data($data);
+        if (App::get_ci()->form_validation->run()) {
+            $user_id = User_model::get_user_id_by_credentials($data['login'], $data['password']);
+            if (!is_null($user_id)) {
+                Login_model::start_session($user_id);
+
+                return $this->response_success();
+            } else {
+                return $this->response_error('Invalid credentials', [], 400);
+            }
+        } else {
+            return $this->response_error('Empty credentials', [], 400);
         }
-
-        // But data from modal window sent by POST request.  App::get_ci()->input...  to get it.
-
-
-        //Todo: Authorisation
-
-        Login_model::start_session($user_id);
-
-        return $this->response_success(['user' => $user_id]);
     }
 
 
