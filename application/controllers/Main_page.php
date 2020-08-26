@@ -16,6 +16,7 @@ class Main_page extends MY_Controller
         App::get_ci()->load->model('User_model');
         App::get_ci()->load->model('Login_model');
         App::get_ci()->load->model('Post_model');
+        App::get_ci()->load->model('Comment_model');
 
         if (is_prod())
         {
@@ -59,28 +60,42 @@ class Main_page extends MY_Controller
     }
 
 
-    public function comment($post_id,$message){ // or can be App::get_ci()->input->post('news_id') , but better for GET REQUEST USE THIS ( tests )
-
-        if (!User_model::is_logged()){
+    public function comment($post_id, $type = 'post', $parent_id = null)
+    {
+        if (!User_model::is_logged()) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
         }
 
         $post_id = intval($post_id);
+        $data = json_decode(App::get_ci()->security->xss_clean(App::get_ci()->input->raw_input_stream), true);
 
-        if (empty($post_id) || empty($message)){
+        if (empty($post_id) || !isset($data['message']) || empty($data['message'])) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
 
-        try
-        {
+        try {
             $post = new Post_model($post_id);
-        } catch (EmeraldModelNoDataException $ex){
+        } catch (EmeraldModelNoDataException $ex) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
         }
 
+        if ($type == 'comment') {
+            try {
+                $parent = new Comment_model($parent_id);
+            } catch (EmeraldModelNoDataException $ex) {
+                return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
+            }
+        }
 
-        $posts =  Post_model::preparation($post, 'full_info');
-        return $this->response_success(['post' => $posts]);
+        $comment = Comment_model::create([
+            'user_id' => User_model::get_session_id(),
+            'assign_id' => $post_id,
+            'parent_id' => ($type == 'comment') ? $parent_id : null,
+            'text' => $data['message']
+        ]);
+        $comment =  Comment_model::preparation([$comment], 'full_info');
+
+        return $this->response_success(['comment' => $comment]);
     }
 
 
