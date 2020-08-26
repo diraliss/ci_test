@@ -16,7 +16,7 @@ class Transaction_model extends CI_Emerald_Model
     protected $state;
     /** @var string */
     protected $type;
-    /** @var double */
+    /** @var string */
     protected $amount;
     /** @var string */
     protected $extra;
@@ -48,9 +48,9 @@ class Transaction_model extends CI_Emerald_Model
     }
 
     /**
-     * @return float
+     * @return string
      */
-    public function get_amount(): float
+    public function get_amount(): string
     {
         return $this->amount;
     }
@@ -87,11 +87,65 @@ class Transaction_model extends CI_Emerald_Model
         if (!in_array($data['type'], self::TRANSACTION_TYPES)) {
             throw new \Exception('Wrong transaction type');
         }
-        $data['amount'] = floatval($data['amount']);
-        if ($data['amount'] <= 0) {
-            throw new \Exception('Wrong amount value');
-        }
         App::get_ci()->s->from(self::CLASS_TABLE)->insert($data)->execute();
         return new static(App::get_ci()->s->get_insert_id());
+    }
+
+    public static function add_wrong_input_transaction($user_id, $amount, $extra = [])
+    {
+        self::create([
+            'user_id' => $user_id,
+            'amount' => $amount,
+            'state' => 0,
+            'type' => 'in',
+            'extra' => json_encode($extra)
+        ]);
+    }
+
+    public static function add_success_input_transaction($user_id, $amount, $extra = [])
+    {
+        self::create([
+            'user_id' => $user_id,
+            'amount' => $amount,
+            'state' => 1,
+            'type' => 'in',
+            'extra' => json_encode($extra)
+        ]);
+    }
+
+    public static function add_wrong_output_transaction($user_id, $amount, $extra = [])
+    {
+        self::create([
+            'user_id' => $user_id,
+            'amount' => $amount,
+            'state' => 0,
+            'type' => 'out',
+            'extra' => json_encode($extra)
+        ]);
+    }
+
+    public static function add_success_output_transaction($user_id, $amount, $extra = [])
+    {
+        self::create([
+            'user_id' => $user_id,
+            'amount' => $amount,
+            'state' => 1,
+            'type' => 'out',
+            'extra' => json_encode($extra)
+        ]);
+    }
+
+    public static function get_user_transactions($user_id, $state = null)
+    {
+        $query = ['user_id' => $user_id];
+        if (!is_null($state)) {
+            $query['state'] = intval($state);
+        }
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where($query)->orderBy('time_created', 'ASC')->many();
+        $ret = [];
+        foreach ($data as $i) {
+            $ret[] = (new self())->set($i);
+        }
+        return $ret;
     }
 }

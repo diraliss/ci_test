@@ -1,8 +1,9 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-class Migration_Create_transaction_table extends CI_Migration {
+class Migration_Create_transaction_table extends CI_Migration
+{
 
     public function up()
     {
@@ -15,22 +16,29 @@ class Migration_Create_transaction_table extends CI_Migration {
             ),
             'type' => array(
                 'type' => 'VARCHAR',
-                'constraint' => '8',
+                'constraint' => '7',
             ),
             'user_id' => array(
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => TRUE,
+                'null' => true
             ),
             'state' => array(
                 'type' => 'TINYINT',
                 'unsigned' => TRUE,
+                'default' => 0
             ),
             'extra' => array(
-                'type' => 'TEXT'
-            )
+                'type' => 'TEXT',
+                'null' => true
+            ),
+            'amount' => array(
+                'type' => 'VARCHAR', //чтобы записалось ЛЮБОЕ значение
+                'constraint' => '255',
+                'null' => true
+            ),
         ));
-        $this->dbforge->add_field('`amount` DECIMAL(16,2) NOT NULL');
         $this->dbforge->add_field('`time_created` timestamp NULL DEFAULT CURRENT_TIMESTAMP');
         $this->dbforge->add_key('id', TRUE);
         $this->dbforge->create_table('transaction');

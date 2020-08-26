@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 $config = array(
     'main_page/login' => array(
@@ -21,16 +21,19 @@ $config = array(
             'rules' => array(
                 'required',
                 'integer',
-                function($id) {
+                array('validate_user', function ($id) {
                     App::get_ci()->load->model('User_model');
                     return User_model::exist($id);
-                }
-            )
+                })
+            ),
+            'errors' => array(
+                'validate_user' => 'User not exist.',
+            ),
         ),
         array(
             'field' => 'amount',
             'label' => 'Amount',
-            'rules' => 'required|decimal'
+            'rules' => 'required|numeric'
         ),
     )
 );
