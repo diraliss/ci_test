@@ -374,6 +374,16 @@ class User_model extends CI_Emerald_Model {
         }
     }
 
-
+    /**
+     * Returns user id found by login (email) and password
+     * @param string $login
+     * @param string $password
+     * @return int|null
+     */
+    public static function get_user_id_by_credentials(string $login, string $password): ?int
+    {
+        $user_id = App::get_ci()->s->from(self::CLASS_TABLE)->where(['email' => $login, 'password' => $password])->value('id');
+        return ($user_id ? intval($user_id) : null);
+    }
 
 }
