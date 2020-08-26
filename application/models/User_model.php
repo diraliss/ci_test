@@ -291,17 +291,20 @@ class User_model extends CI_Emerald_Model {
         App::get_ci()->db->trans_begin();
 
         try {
-            $this->add_to_wallet_balance($amount);
-            $this->add_to_wallet_total_refilled($amount);
+            App::get_ci()->db->where('id', $this->get_id());
+            App::get_ci()->db->update(self::CLASS_TABLE, [
+                'wallet_balance' => $this->get_wallet_balance() + $amount,
+                'wallet_total_refilled' => $this->get_wallet_total_refilled() + $amount
+            ]);
 
             if (App::get_ci()->db->trans_status() === FALSE) {
-                App::get_ci()->db->trans_rollback();
                 Transaction_model::add_wrong_input_transaction($this->get_id(), $amount, ['input'=> $extra, 'db_errors' => App::get_ci()->db->error()]);
+                App::get_ci()->db->trans_rollback();
                 return false;
             }
         } catch (\Exception $e) {
-            App::get_ci()->db->trans_rollback();
             Transaction_model::add_wrong_input_transaction($this->get_id(), $amount, ['input'=> $extra, 'error_message' => $e->getMessage()]);
+            App::get_ci()->db->trans_rollback();
             return false;
         }
         App::get_ci()->db->trans_commit();
