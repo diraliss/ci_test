@@ -378,8 +378,8 @@ class User_model extends CI_Emerald_Model {
             ]);
 
             if (App::get_ci()->db->trans_status() === FALSE) {
-                App::get_ci()->db->trans_rollback();
                 Transaction_model::add_wrong_output_transaction($this->get_id(), $price, ['boosterpack_id' => $boosterpack->get_id(), 'db_errors' => App::get_ci()->db->error()]);
+                App::get_ci()->db->trans_rollback();
                 return false;
             }
         } catch (\Exception $e) {
