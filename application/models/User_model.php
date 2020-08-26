@@ -253,6 +253,10 @@ class User_model extends CI_Emerald_Model {
         return (App::get_ci()->s->get_affected_rows() > 0);
     }
 
+    public function add_money($amount, $extra = []) {
+
+    }
+
     /**
      * @return self[]
      * @throws Exception
@@ -269,6 +273,15 @@ class User_model extends CI_Emerald_Model {
         return $ret;
     }
 
+
+    /**
+     * @param int $id
+     * @return boolean
+     */
+    public static function exist($id) {
+        $count = App::get_ci()->s->from(self::CLASS_TABLE)->where('id', intval($id))->count();
+        return ($count > 0);
+    }
 
     /**
      * @param User_model|User_model[] $data
@@ -329,6 +342,8 @@ class User_model extends CI_Emerald_Model {
 
             $o->time_created = $data->get_time_created();
             $o->time_updated = $data->get_time_updated();
+
+            $o->balance = $data->get_wallet_balance();
         }
 
         return $o;

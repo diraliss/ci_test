@@ -124,9 +124,23 @@ class Main_page extends MY_Controller
         redirect(site_url('/'));
     }
 
-    public function add_money(){
-        // todo: add money to user logic
-        return $this->response_success(['amount' => rand(1,55)]);
+    public function add_money()
+    {
+        App::get_ci()->load->library('form_validation');
+
+        $data = json_decode(App::get_ci()->security->xss_clean(App::get_ci()->input->raw_input_stream), true);
+        $data['user_id'] = !isset($data['user_id']) ? User_model::get_session_id() : intval($data['user_id']);
+        App::get_ci()->form_validation->set_data($data);
+
+        if (App::get_ci()->form_validation->run()) {
+            $user = new User_model($data['user_id']);
+            $user->add_money($data['amount']);
+            $user->reload();
+
+            return $this->response_success(['user' => User_model::preparation($user, 'default')]);
+        } else {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        }
     }
 
     public function buy_boosterpack(){

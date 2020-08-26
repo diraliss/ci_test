@@ -2,7 +2,7 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Migration_Create_entity_like_table extends CI_Migration {
+class Migration_Create_transaction_table extends CI_Migration {
 
     public function up()
     {
@@ -13,28 +13,31 @@ class Migration_Create_entity_like_table extends CI_Migration {
                 'unsigned' => TRUE,
                 'auto_increment' => TRUE
             ),
-            'entity_id' => array(
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => TRUE,
-            ),
-            'entity_type' => array(
+            'type' => array(
                 'type' => 'VARCHAR',
-                'constraint' => '32',
+                'constraint' => '8',
             ),
             'user_id' => array(
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => TRUE,
+            ),
+            'state' => array(
+                'type' => 'TINYINT',
+                'unsigned' => TRUE,
+            ),
+            'extra' => array(
+                'type' => 'TEXT'
             )
         ));
+        $this->dbforge->add_field('`amount` DECIMAL(16,2) NOT NULL');
         $this->dbforge->add_field('`time_created` timestamp NULL DEFAULT CURRENT_TIMESTAMP');
         $this->dbforge->add_key('id', TRUE);
-        $this->dbforge->create_table('entity_like');
+        $this->dbforge->create_table('transaction');
     }
 
     public function down()
     {
-        $this->dbforge->drop_table('entity_like');
+        $this->dbforge->drop_table('transaction');
     }
 }

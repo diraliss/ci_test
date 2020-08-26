@@ -90,7 +90,7 @@ var app = new Vue({
 			else{
 				self.invalidSum = false
 				axios.post('/main_page/add_money', {
-					sum: self.addSum,
+					amount: self.addSum,
 				})
 					.then(function (response) {
 						setTimeout(function () {
