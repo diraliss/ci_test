@@ -16,6 +16,7 @@ class Migration_Create_entity_like_table extends CI_Migration {
             'entity_id' => array(
                 'type' => 'INT',
                 'constraint' => 11,
+                'unsigned' => TRUE,
             ),
             'entity_type' => array(
                 'type' => 'VARCHAR',
@@ -24,6 +25,7 @@ class Migration_Create_entity_like_table extends CI_Migration {
             'user_id' => array(
                 'type' => 'INT',
                 'constraint' => 11,
+                'unsigned' => TRUE,
             )
         ));
         $this->dbforge->add_field('`time_created` timestamp NULL DEFAULT CURRENT_TIMESTAMP');

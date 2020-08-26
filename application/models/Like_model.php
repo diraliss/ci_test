@@ -157,6 +157,9 @@ class Like_model extends CI_Emerald_Model
 
     public static function create(array $data)
     {
+        if (!in_array($data['entity_type'], self::ENTITY_TYPES)) {
+            throw new \Exception('Wrong entity type');
+        }
         App::get_ci()->s->from(self::CLASS_TABLE)->insert($data)->execute();
         return new static(App::get_ci()->s->get_insert_id());
     }

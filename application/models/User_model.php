@@ -33,6 +33,8 @@ class User_model extends CI_Emerald_Model {
     /** @var string */
     protected $time_updated;
 
+    /** @var Transaction_model[] */
+    protected $transactions;
 
     private static $_current_user;
 
@@ -151,6 +153,17 @@ class User_model extends CI_Emerald_Model {
     }
 
     /**
+     * @param float $sum
+     *
+     * @return bool
+     */
+    public function add_to_wallet_balance(float $sum)
+    {
+        $this->wallet_balance += $sum;
+        return $this->save('wallet_balance', $this->wallet_balance);
+    }
+
+    /**
      * @return float
      */
     public function get_wallet_total_refilled(): float
@@ -167,6 +180,17 @@ class User_model extends CI_Emerald_Model {
     {
         $this->wallet_total_refilled = $wallet_total_refilled;
         return $this->save('wallet_total_refilled', $wallet_total_refilled);
+    }
+
+    /**
+     * @param float $sum
+     *
+     * @return bool
+     */
+    public function add_to_wallet_total_refilled(float $sum)
+    {
+        $this->wallet_total_refilled += $sum;
+        return $this->save('wallet_total_refilled', $this->wallet_total_refilled);
     }
 
     /**
@@ -226,6 +250,13 @@ class User_model extends CI_Emerald_Model {
         return $this->save('time_updated', $time_updated);
     }
 
+    public function get_transactions()
+    {
+        if (empty($this->transactions)) {
+            $this->transactions = Transaction_model::get_user_transactions($this->get_id());
+        }
+        return $this->transactions;
+    }
 
     function __construct($id = NULL)
     {
@@ -253,6 +284,31 @@ class User_model extends CI_Emerald_Model {
         return (App::get_ci()->s->get_affected_rows() > 0);
     }
 
+    public function add_money($amount, $extra = []) {
+        $amount = round(floatval($amount), 2);
+
+        App::get_ci()->load->database();
+        App::get_ci()->db->trans_begin();
+
+        try {
+            $this->add_to_wallet_balance($amount);
+            $this->add_to_wallet_total_refilled($amount);
+
+            if (App::get_ci()->db->trans_status() === FALSE) {
+                App::get_ci()->db->trans_rollback();
+                Transaction_model::add_wrong_input_transaction($this->get_id(), $amount, ['input'=> $extra, 'db_errors' => App::get_ci()->db->error()]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            App::get_ci()->db->trans_rollback();
+            Transaction_model::add_wrong_input_transaction($this->get_id(), $amount, ['input'=> $extra, 'error_message' => $e->getMessage()]);
+            return false;
+        }
+        App::get_ci()->db->trans_commit();
+        Transaction_model::add_success_input_transaction($this->get_id(), $amount);
+        return true;
+    }
+
     /**
      * @return self[]
      * @throws Exception
@@ -269,6 +325,15 @@ class User_model extends CI_Emerald_Model {
         return $ret;
     }
 
+
+    /**
+     * @param int $id
+     * @return boolean
+     */
+    public static function exist($id) {
+        $count = App::get_ci()->s->from(self::CLASS_TABLE)->where('id', intval($id))->count();
+        return ($count > 0);
+    }
 
     /**
      * @param User_model|User_model[] $data
@@ -329,6 +394,8 @@ class User_model extends CI_Emerald_Model {
 
             $o->time_created = $data->get_time_created();
             $o->time_updated = $data->get_time_updated();
+
+            $o->balance = $data->get_wallet_balance();
         }
 
         return $o;
