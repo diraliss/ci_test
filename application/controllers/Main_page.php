@@ -39,6 +39,12 @@ class Main_page extends MY_Controller
         return $this->response_success(['posts' => $posts]);
     }
 
+    public function get_all_boosterpacks()
+    {
+        $boosterpacks = Boosterpack_model::preparation(Boosterpack_model::get_all(), 'main_page');
+        return $this->response_success(['boosterpacks' => $boosterpacks]);
+    }
+
     public function get_post($post_id)
     { // or can be $this->input->post('news_id') , but better for GET REQUEST USE THIS
 
@@ -221,7 +227,8 @@ class Main_page extends MY_Controller
 
     //GET
 
-    public function transactions() {
+    public function user_transactions()
+    {
         if (!User_model::is_logged()) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
         }
@@ -233,7 +240,8 @@ class Main_page extends MY_Controller
         return $this->response_success(['transactions' => Transaction_model::preparation($transactions)]);
     }
 
-    public function boosterpacks() {
+    public function user_boosterpacks()
+    {
         if (!User_model::is_logged()) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
         }
