@@ -200,14 +200,12 @@ class Comment_model extends CI_Emerald_Model
     /**
      * @return User_model
      */
-    public function get_user():User_model
+    public function get_user(): User_model
     {
-        if (empty($this->user))
-        {
+        if (empty($this->user)) {
             try {
                 $this->user = new User_model($this->get_user_id());
-            } catch (Exception $exception)
-            {
+            } catch (Exception $exception) {
                 $this->user = new User_model();
             }
         }
@@ -261,16 +259,18 @@ class Comment_model extends CI_Emerald_Model
 
     /**
      * @param int $assign_id
+     * @param bool $without_parent
      * @return self[]
-     * @throws Exception
      */
-    public static function get_all_by_assign_id(int $assign_id)
+    public static function get_all_by_assign_id(int $assign_id, bool $without_parent = false)
     {
-
-        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id])->orderBy('time_created','ASC')->many();
+        $query = ['assign_id' => $assign_id];
+        if ($without_parent) {
+            $query['parent_id'] = null;
+        }
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where($query)->orderBy('time_created', 'ASC')->many();
         $ret = [];
-        foreach ($data as $i)
-        {
+        foreach ($data as $i) {
             $ret[] = (new self())->set($i);
         }
         return $ret;
@@ -283,10 +283,9 @@ class Comment_model extends CI_Emerald_Model
      */
     public static function get_all_by_parent_id(int $parent_id)
     {
-        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where(['parent_id' => $parent_id])->orderBy('time_created','ASC')->many();
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where(['parent_id' => $parent_id])->orderBy('time_created', 'ASC')->many();
         $ret = [];
-        foreach ($data as $i)
-        {
+        foreach ($data as $i) {
             $ret[] = (new self())->set($i);
         }
         return $ret;
@@ -296,7 +295,8 @@ class Comment_model extends CI_Emerald_Model
      * @param int $id
      * @return boolean
      */
-    public static function exist($id) {
+    public static function exist($id)
+    {
         $count = App::get_ci()->s->from(self::CLASS_TABLE)->where('id', intval($id))->count();
         return ($count > 0);
     }
@@ -309,8 +309,7 @@ class Comment_model extends CI_Emerald_Model
      */
     public static function preparation($data, $preparation = 'default')
     {
-        switch ($preparation)
-        {
+        switch ($preparation) {
             case 'full_info':
                 return self::_preparation_full_info($data);
             default:
@@ -327,14 +326,15 @@ class Comment_model extends CI_Emerald_Model
     {
         $ret = [];
 
-        foreach ($data as $d){
+        foreach ($data as $d) {
             $o = new stdClass();
 
             $o->id = $d->get_id();
             $o->text = $d->get_text();
 
-            $o->user = User_model::preparation($d->get_user(),'main_page');
+            $o->user = User_model::preparation($d->get_user(), 'main_page');
             $o->parent_id = $d->get_parent_id();
+            $o->childs = Comment_model::preparation($d->get_comments(), 'full_info');
 
             $o->likes = $d->get_likes_count();
 
