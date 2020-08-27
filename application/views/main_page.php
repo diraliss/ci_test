@@ -84,8 +84,9 @@
                 <li><b>/main_page/like/{type=[post,comment]}/{entity_id}</b></li>
                 <li><b>/main_page/add_money</b> JSON:{'amount', ?'user_id'}</li>
                 <li><b>/main_page/buy_boosterpack/{boosterpack_id}</b></li>
-                <li><b>/main_page/transactions(?filter[state]=[0,1])</b></li>
-                <li><b>/main_page/boosterpacks</b></li>
+                <li><b>/main_page/user_transactions(?filter[state]=[0,1])</b> - получение всех транзакций текущего пользователя с фильтрацией по удачности</li>
+                <li><b>/main_page/user_boosterpacks</b> - получение всех купленных текущим пользователем бустерпаков</li>
+                <li><b>/main_page/boosterpacks</b> - получение всех бустерпаков</li>
             </ol>
         </div>
     </div>

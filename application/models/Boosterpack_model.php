@@ -13,7 +13,7 @@ class Boosterpack_model extends CI_Emerald_Model
 
     /** @var float Цена бустерпака */
     protected $price;
-    /** @var float Банк, который наполняется  */
+    /** @var float Банк, который наполняется */
     protected $bank;
 
     /** @var string */
@@ -134,6 +134,16 @@ class Boosterpack_model extends CI_Emerald_Model
         return (App::get_ci()->s->get_affected_rows() > 0);
     }
 
+    public static function get_all()
+    {
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->many();
+        $ret = [];
+        foreach ($data as $i) {
+            $ret[] = (new self())->set($i);
+        }
+        return $ret;
+    }
+
     public function get_bought_likes()
     {
         //обновление не выполняется! использовать только внутри конструкции с trans_begin!
@@ -149,7 +159,6 @@ class Boosterpack_model extends CI_Emerald_Model
     }
 
 
-
     /**
      * @param Boosterpack_model|Boosterpack_model[] $data
      * @param string $preparation
@@ -158,10 +167,11 @@ class Boosterpack_model extends CI_Emerald_Model
      */
     public static function preparation($data, $preparation = 'default')
     {
-        switch ($preparation)
-        {
+        switch ($preparation) {
             case 'default':
                 return self::_preparation_default($data);
+            case 'main_page':
+                return self::_preparation_main_page($data);
             default:
                 throw new Exception('undefined preparation type');
         }
@@ -175,8 +185,7 @@ class Boosterpack_model extends CI_Emerald_Model
     {
         $o = new stdClass();
 
-        if (!$data->is_loaded())
-        {
+        if (!$data->is_loaded()) {
             $o->id = NULL;
         } else {
             $o->id = $data->get_id();
@@ -189,5 +198,25 @@ class Boosterpack_model extends CI_Emerald_Model
         }
 
         return $o;
+    }
+
+    /**
+     * @param Boosterpack_model[] $data
+     * @return stdClass[]
+     */
+    private static function _preparation_main_page($data)
+    {
+        $ret = [];
+
+        foreach ($data as $d) {
+            $o = new stdClass();
+            $o->id = $d->get_id();
+            $o->price = $d->get_price();
+//            $o->bank = $d->get_bank();
+
+            $ret[] = $o;
+        }
+
+        return $ret;
     }
 }
