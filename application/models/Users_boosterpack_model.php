@@ -20,6 +20,25 @@ class Users_boosterpack_model extends CI_Emerald_Model
     /**
      * @return int
      */
+    public function get_added_likes(): int
+    {
+        return $this->added_likes;
+    }
+
+    /**
+     * @param int $added_likes
+     *
+     * @return bool
+     */
+    public function set_added_likes(int $added_likes)
+    {
+        $this->added_likes = $added_likes;
+        return $this->save('added_likes', $added_likes);
+    }
+
+    /**
+     * @return int
+     */
     public function get_user_id(): int
     {
         return $this->user_id;
@@ -86,6 +105,13 @@ class Users_boosterpack_model extends CI_Emerald_Model
         return $this->boosterpack;
     }
 
+    function __construct($id = NULL)
+    {
+        parent::__construct();
+
+        $this->set_id($id);
+    }
+
 
     public static function create(array $data)
     {
@@ -98,5 +124,55 @@ class Users_boosterpack_model extends CI_Emerald_Model
         $this->is_loaded(TRUE);
         App::get_ci()->s->from(self::CLASS_TABLE)->where(['id' => $this->get_id()])->delete()->execute();
         return (App::get_ci()->s->get_affected_rows() > 0);
+    }
+
+    public static function get_user_boosterpacks($user_id)
+    {
+        $query = ['user_id' => $user_id];
+        $data = App::get_ci()->s->from(self::CLASS_TABLE)->where($query)->orderBy('time_created', 'ASC')->many();
+        $ret = [];
+        foreach ($data as $i) {
+            $ret[] = (new self())->set($i);
+        }
+        return $ret;
+    }
+
+    /**
+     * @param Users_boosterpack_model|Users_boosterpack_model[] $data
+     * @param string $preparation
+     * @return stdClass|stdClass[]
+     * @throws Exception
+     */
+    public static function preparation($data, $preparation = 'default')
+    {
+        switch ($preparation) {
+            case 'default':
+                return self::_preparation_default($data);
+            default:
+                throw new Exception('undefined preparation type');
+        }
+    }
+
+
+    /**
+     * @param Users_boosterpack_model[] $data
+     * @return stdClass[]
+     */
+    private static function _preparation_default($data)
+    {
+        $ret = [];
+
+        foreach ($data as $d){
+            $o = new stdClass();
+
+            $o->id = $d->get_id();
+
+            $o->boosterpack = Boosterpack_model::preparation($d->get_boosterpack());
+            $o->added_likes = $d->get_added_likes();
+
+            $ret[] = $o;
+        }
+
+        return $ret;
     }
 }

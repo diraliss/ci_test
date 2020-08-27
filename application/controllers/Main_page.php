@@ -20,8 +20,7 @@ class Main_page extends MY_Controller
         App::get_ci()->load->model('Like_model');
         App::get_ci()->load->model('Boosterpack_model');
 
-        if (is_prod())
-        {
+        if (is_prod()) {
             die('In production it will be hard to debug! Run as development environment!');
         }
     }
@@ -31,74 +30,73 @@ class Main_page extends MY_Controller
         $user = User_model::get_user();
 
 
-
         App::get_ci()->load->view('main_page', ['user' => User_model::preparation($user, 'default')]);
     }
 
     public function get_all_posts()
     {
-        $posts =  Post_model::preparation(Post_model::get_all(), 'main_page');
+        $posts = Post_model::preparation(Post_model::get_all(), 'main_page');
         return $this->response_success(['posts' => $posts]);
     }
 
-    public function get_post($post_id){ // or can be $this->input->post('news_id') , but better for GET REQUEST USE THIS
+    public function get_post($post_id)
+    { // or can be $this->input->post('news_id') , but better for GET REQUEST USE THIS
 
         $post_id = intval($post_id);
 
-        if (empty($post_id)){
+        if (empty($post_id)) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
 
-        try
-        {
+        try {
             $post = new Post_model($post_id);
-        } catch (EmeraldModelNoDataException $ex){
+        } catch (EmeraldModelNoDataException $ex) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
         }
 
 
-        $posts =  Post_model::preparation($post, 'full_info');
+        $posts = Post_model::preparation($post, 'full_info');
         return $this->response_success(['post' => $posts]);
     }
 
 
-    public function comment($post_id, $type = 'post', $parent_id = null)
+    public function comment($post_id = null, $type = 'post', $parent_id = null)
     {
         if (!User_model::is_logged()) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
         }
-
-        $post_id = intval($post_id);
         $data = json_decode(App::get_ci()->security->xss_clean(App::get_ci()->input->raw_input_stream), true);
 
-        if (empty($post_id) || !isset($data['message']) || empty($data['message'])) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
+        $data['post_id'] = $post_id;
+        $data['type'] = $type;
+        $data['parent_id'] = $parent_id;
+
+        App::get_ci()->load->library('form_validation');
+        App::get_ci()->form_validation->set_data($data);
+        if (App::get_ci()->form_validation->run() && ((($type == 'comment') && !empty($parent_id)) || ($type != 'comment'))) {
+            $comment = Comment_model::create([
+                'user_id' => User_model::get_session_id(),
+                'assign_id' => $post_id,
+                'parent_id' => ($type == 'comment') ? $parent_id : null,
+                'text' => $data['message']
+            ]);
+            $comment = Comment_model::preparation([$comment], 'full_info');
+
+            return $this->response_success(['comment' => $comment]);
+        } else {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS, ['errors' => App::get_ci()->form_validation->error_array()]);
         }
-
-        if (!Post_model::exist($post_id)) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
-        }
-
-        if ($type == 'comment') {
-            if (!Comment_model::exist($parent_id)) {
-                return $this->response_error(CI_Core::RESPONSE_GENERIC_NO_DATA);
-            }
-        }
-
-        $comment = Comment_model::create([
-            'user_id' => User_model::get_session_id(),
-            'assign_id' => $post_id,
-            'parent_id' => ($type == 'comment') ? $parent_id : null,
-            'text' => $data['message']
-        ]);
-        $comment =  Comment_model::preparation([$comment], 'full_info');
-
-        return $this->response_success(['comment' => $comment]);
     }
 
 
     public function login()
     {
+        App::get_ci()->load->model('Users_auth_model');
+        if (Users_auth_model::is_blocked()) {
+            Users_auth_model::fail_login(['errors' => ['Authorization attempts ended, try later'], 'blocked_until' => Users_auth_model::get_blocked_until()]);
+
+            return $this->response_error('Authorization attempts ended, try later', ['blocked_until' => Users_auth_model::get_blocked_until()], 403);
+        }
         App::get_ci()->load->library('form_validation');
 
         $data = json_decode(App::get_ci()->security->xss_clean(App::get_ci()->input->raw_input_stream), true);
@@ -108,16 +106,18 @@ class Main_page extends MY_Controller
             $user_id = User_model::get_user_id_by_credentials($data['login'], $data['password']);
             if (!is_null($user_id)) {
                 Login_model::start_session($user_id);
+                Users_auth_model::success_login();
 
                 return $this->response_success();
             } else {
+                Users_auth_model::increase_login_attempts(['errors' => ['Invalid credentials']]);
                 return $this->response_error('Invalid credentials', [], 400);
             }
         } else {
+            Users_auth_model::increase_login_attempts(['errors' => App::get_ci()->form_validation->error_array()]);
             return $this->response_error('Empty credentials', [], 400);
         }
     }
-
 
     public function logout()
     {
@@ -151,7 +151,7 @@ class Main_page extends MY_Controller
         }
     }
 
-    public function buy_boosterpack($id)
+    public function buy_boosterpack($id = null)
     {
         if (!User_model::is_logged()) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
@@ -176,7 +176,6 @@ class Main_page extends MY_Controller
             return $this->response_error(CI_Core::RESPONSE_GENERIC_TRY_LATER);
         }
     }
-
 
     public function like($type = 'post', $id = null)
     {
@@ -220,4 +219,28 @@ class Main_page extends MY_Controller
         return $this->response_success(['likes' => $object->get_likes_count()]); // Кол-во лайков под постом \ комментарием чтобы обновить
     }
 
+    //GET
+
+    public function transactions() {
+        if (!User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+
+        App::get_ci()->load->model('Transaction_model');
+        $filter = App::get_ci()->input->get('filter', true);
+        $transactions = Transaction_model::get_user_transactions(User_model::get_session_id(), (isset($filter['state']) ? intval($filter['state']) : null));
+
+        return $this->response_success(['transactions' => Transaction_model::preparation($transactions)]);
+    }
+
+    public function boosterpacks() {
+        if (!User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+
+        App::get_ci()->load->model('Users_boosterpack_model');
+        $boosterpacks = Users_boosterpack_model::get_user_boosterpacks(User_model::get_session_id());
+
+        return $this->response_success(['boosterpacks' => Users_boosterpack_model::preparation($boosterpacks)]);
+    }
 }

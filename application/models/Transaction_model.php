@@ -24,9 +24,9 @@ class Transaction_model extends CI_Emerald_Model
     protected $time_created;
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function get_user_id(): int
+    public function get_user_id(): ?int
     {
         return $this->user_id;
     }
@@ -40,9 +40,9 @@ class Transaction_model extends CI_Emerald_Model
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function get_type(): int
+    public function get_type(): string
     {
         return $this->type;
     }
@@ -146,6 +146,49 @@ class Transaction_model extends CI_Emerald_Model
         foreach ($data as $i) {
             $ret[] = (new self())->set($i);
         }
+        return $ret;
+    }
+
+    /**
+     * @param Transaction_model|Transaction_model[] $data
+     * @param string $preparation
+     * @return stdClass|stdClass[]
+     * @throws Exception
+     */
+    public static function preparation($data, $preparation = 'default')
+    {
+        switch ($preparation) {
+            case 'default':
+                return self::_preparation_default($data);
+            default:
+                throw new Exception('undefined preparation type');
+        }
+    }
+
+
+    /**
+     * @param Transaction_model[] $data
+     * @return stdClass[]
+     */
+    private static function _preparation_default($data)
+    {
+        $ret = [];
+
+        foreach ($data as $d){
+            $o = new stdClass();
+
+            $o->id = $d->get_id();
+
+            $o->amount = $d->get_amount();
+            $o->extra = $d->get_extra();
+            $o->state = $d->get_state();
+            $o->type = $d->get_type();
+
+            $o->time_created = $d->get_time_created();
+
+            $ret[] = $o;
+        }
+
         return $ret;
     }
 }
