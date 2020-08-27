@@ -197,8 +197,8 @@
                                         <span>{{comment.likes}}</span>
                                     </span>
                                 </span><br>
-                                <small v-if="comment.parent_id" class="text-muted">is answer for {{comment.parent_id}}</small> <br v-if="comment.parent_id">
-                                <label for='commentParent'>answer to it</label>&nbsp<input type='radio' :value="comment.id" v-model="commentParent" id='commentParent'>
+                                <small v-if="comment.parent_id" class="text-muted">is answer to {{comment.parent_id}}</small> <br v-if="comment.parent_id">
+                                <? if (User_model::is_logged()) { ?><label>Reply&nbsp<input type='radio' :value="comment.id" v-model="commentParent"></label> <? } ?>
                             </div>
                             <? if (User_model::is_logged()) { ?>
                                 <form class="form-inline">

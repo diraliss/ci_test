@@ -160,8 +160,10 @@ var app = new Vue({
             var self = this;
             axios.get('/main_page/user_transactions')
                 .then(function (response) {
+                    self.backendData.singleData = {};
                     self.backendData.data = response.data.transactions;
                     self.backendData.title = 'Transactions';
+                    self.backendData.type = 'array';
 
                     if (self.backendData.data.length > 0) {
                         setTimeout(function () {
@@ -174,8 +176,10 @@ var app = new Vue({
             var self = this;
             axios.get('/main_page/user_boosterpacks')
                 .then(function (response) {
+                    self.backendData.singleData = {};
                     self.backendData.data = response.data.boosterpacks;
                     self.backendData.title = 'Boosterpacks';
+                    self.backendData.type = 'array';
 
                     if (self.backendData.data.length > 0) {
                         setTimeout(function () {
@@ -191,6 +195,7 @@ var app = new Vue({
                     self.user = response.data.user;
 
                     self.backendData.singleData = response.data.user;
+                    self.backendData.data = [];
                     self.backendData.title = 'User info';
                     self.backendData.type = 'single';
 
