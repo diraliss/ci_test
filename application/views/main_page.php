@@ -76,14 +76,18 @@
           </div>
         </div>
       </div>
-      If You need some help about core - read README.MD in system folder
-      <br>
-      What we have done All posts: <a href="/main_page/get_all_posts">/main_page/get_all_posts</a> One post: <a
-          href="/main_page/get_post/1">/main_page/get_post/1</a>
-      <br>
-      Just go coding Login: <a href="/main_page/login">/main_page/login</a> Make boosterpack feature <a
-          href="/main_page/buy_boosterpack">/main_page/buy_boosterpack</a> Add money feature <a
-          href="/main_page/add_money">/main_page/add_money</a>
+        <div>
+            <h4>little apiary:</h4>
+            <ol>
+                <li><b>/main_page/comment/{post_id}</b> JSON:{'message'}</li>
+                <li><b>/main_page/comment/{post_id}/comment/{parent_id}</b></li>
+                <li><b>/main_page/like/{type=[post,comment]}/{entity_id}</b></li>
+                <li><b>/main_page/add_money</b> JSON:{'amount', ?'user_id'}</li>
+                <li><b>/main_page/buy_boosterpack/{boosterpack_id}</b></li>
+                <li><b>/main_page/transactions(?filter[state]=[0,1])</b></li>
+                <li><b>/main_page/boosterpacks</b></li>
+            </ol>
+        </div>
     </div>
   </div>
 
