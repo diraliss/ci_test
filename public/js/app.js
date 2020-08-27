@@ -3,6 +3,7 @@ var app = new Vue({
     data: {
         login: '',
         pass: '',
+        user: {},
         post: false,
         invalidLogin: false,
         invalidPass: false,
@@ -39,8 +40,18 @@ var app = new Vue({
             .then(function (response) {
                 self.packs = response.data.boosterpacks;
             });
+        axios.get('/main_page/get_current_user_info')
+            .then(function (response) {
+            self.user = response.data.user;
+        });
     },
     methods: {
+        use_like: function() {
+            if (this.user.available_likes) {
+                this.user.available_likes--;
+            }
+        },
+
         logout: function () {
             console.log('logout');
         },
@@ -59,9 +70,7 @@ var app = new Vue({
                     password: self.pass
                 })
                     .then(function (response) {
-                        setTimeout(function () {
-                            $('#loginModal').modal('hide');
-                        }, 500);
+                        location.reload();
                     })
             }
         },
@@ -89,7 +98,12 @@ var app = new Vue({
                 axios.post('/main_page/add_money', {
                     amount: self.addSum,
                 })
-                    .then(function (response) {
+                    .then(function () {
+                        if (response.data.user) {
+                            self.user = response.data.user;
+                        }
+
+                        self.openUsersInfo();
                         setTimeout(function () {
                             $('#addModal').modal('hide');
                         }, 500);
@@ -120,6 +134,7 @@ var app = new Vue({
         },
         addPostLike: function (id) {
             var self = this;
+            self.use_like();
             axios.get('/main_page/like/post/' + id)
                 .then(function (response) {
                     self.likes = response.data.likes;
@@ -127,11 +142,18 @@ var app = new Vue({
         },
         addCommentLike: function (id) {
             var self = this;
+            self.use_like();
             axios.get('/main_page/like/comment/' + id).then(self.reloadPost);
         },
         buyPack: function (id) {
+            var self = this;
             axios.post('/main_page/buy_boosterpack/' + id, {
                 id: id,
+            }).then(function (response) {
+                if (response.data.user) {
+                    self.user = response.data.user;
+                }
+                self.openUsersInfo();
             })
         },
         openUsersTransactions: function () {
@@ -166,6 +188,8 @@ var app = new Vue({
             var self = this;
             axios.get('/main_page/get_current_user_info')
                 .then(function (response) {
+                    self.user = response.data.user;
+
                     self.backendData.singleData = response.data.user;
                     self.backendData.title = 'User info';
                     self.backendData.type = 'single';

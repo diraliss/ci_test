@@ -35,18 +35,12 @@ class Main_page extends MY_Controller
 
     public function get_all_posts()
     {
-        if (!User_model::is_logged()) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
-        }
         $posts = Post_model::preparation(Post_model::get_all(), 'main_page');
         return $this->response_success(['posts' => $posts]);
     }
 
     public function get_all_boosterpacks()
     {
-        if (!User_model::is_logged()) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
-        }
         $boosterpacks = Boosterpack_model::preparation(Boosterpack_model::get_all(), 'main_page');
         return $this->response_success(['boosterpacks' => $boosterpacks]);
     }
@@ -74,7 +68,7 @@ class Main_page extends MY_Controller
     public function get_current_user_info()
     {
         if (!User_model::is_logged()) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH, [], 403);
+            return $this->response_success(['user' => new stdClass()]);
         }
         $user = User_model::get_user();
         return $this->response_success(['user' => User_model::preparation($user, 'default')]);

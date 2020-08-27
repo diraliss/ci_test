@@ -22,9 +22,7 @@
             <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
                 <li class="nav-item">
                     <? if (User_model::is_logged()) { ?>
-                        <a href="/main_page/logout" class="btn btn-primary my-2 my-sm-0"
-                           data-target="#loginModal">Log out, <?= $user->personaname ?>
-                        </a>
+                        <a href="/main_page/logout" class="btn btn-primary my-2 my-sm-0">Log out, <?= $user->personaname ?></a>
                     <? } else { ?>
                         <button type="button" class="btn btn-success my-2 my-sm-0" type="submit" data-toggle="modal"
                                 data-target="#loginModal">Log IN
@@ -48,13 +46,15 @@
                     </li>
                 <? } ?>
             </div>
+            <? if (User_model::is_logged()) { ?>
+                <div class="navbar-collapse collapse order-3">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item text-light">USD: {{user.balance}}</li>
+                        <li class="nav-item text-light">Likes: {{user.available_likes}}</li>
+                    </ul>
+                </div>
+            <? } ?>
         </nav>
-
-        <? if (User_model::is_logged()) { ?>
-            <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
-
-            </div>
-        <? } ?>
     </div>
     <div class="main">
         <div class="posts">
@@ -74,7 +74,9 @@
                     </div>
                 </div>
             </div>
+        </div>
 
+        <? if (User_model::is_logged()) { ?>
             <div class="boosterpacks">
                 <h1 class="text-center">Boosterpack's</h1>
                 <div class="container">
@@ -91,8 +93,11 @@
                     </div>
                 </div>
             </div>
-            <div>
-                <h4>little apiary:</h4>
+        <? } ?>
+
+        <div class='api'>
+            <h3 class="text-center">Api description</h3>
+            <div class="container">
                 <ol>
                     <li><b>/main_page/comment/{post_id}</b> JSON:{'message'}</li>
                     <li><b>/main_page/comment/{post_id}/comment/{parent_id}</b></li>
