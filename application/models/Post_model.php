@@ -161,13 +161,13 @@ class Post_model extends CI_Emerald_Model
     /**
      * @return Comment_model[]
      */
-    public function get_comments()
+    public function get_comments($without_parent = false)
     {
         $this->is_loaded(TRUE);
 
         if (empty($this->comments))
         {
-            $this->comments = Comment_model::get_all_by_assign_id($this->get_id());
+            $this->comments = Comment_model::get_all_by_assign_id($this->get_id(), $without_parent);
         }
         return $this->comments;
 
@@ -305,9 +305,6 @@ class Post_model extends CI_Emerald_Model
 
         $o->id = $data->get_id();
         $o->img = $data->get_img();
-
-
-//            var_dump($d->get_user()->object_beautify()); die();
 
         $o->user = User_model::preparation($data->get_user(),'main_page');
         $o->comments = Comment_model::preparation($data->get_comments(),'full_info');

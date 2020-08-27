@@ -35,12 +35,18 @@ class Main_page extends MY_Controller
 
     public function get_all_posts()
     {
+        if (!User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
         $posts = Post_model::preparation(Post_model::get_all(), 'main_page');
         return $this->response_success(['posts' => $posts]);
     }
 
     public function get_all_boosterpacks()
     {
+        if (!User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
         $boosterpacks = Boosterpack_model::preparation(Boosterpack_model::get_all(), 'main_page');
         return $this->response_success(['boosterpacks' => $boosterpacks]);
     }
@@ -65,11 +71,20 @@ class Main_page extends MY_Controller
         return $this->response_success(['post' => $posts]);
     }
 
+    public function get_current_user_info()
+    {
+        if (!User_model::is_logged()) {
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH, [], 403);
+        }
+        $user = User_model::get_user();
+        return $this->response_success(['user' => User_model::preparation($user, 'default')]);
+    }
+
 
     public function comment($post_id = null, $type = 'post', $parent_id = null)
     {
         if (!User_model::is_logged()) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH, [], 403);
         }
         $data = json_decode(App::get_ci()->security->xss_clean(App::get_ci()->input->raw_input_stream), true);
 
@@ -160,7 +175,7 @@ class Main_page extends MY_Controller
     public function buy_boosterpack($id = null)
     {
         if (!User_model::is_logged()) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH, [], 403);
         }
         $id = intval($id);
         if (empty($id) || !Boosterpack_model::exist($id)) {
@@ -186,7 +201,7 @@ class Main_page extends MY_Controller
     public function like($type = 'post', $id = null)
     {
         if (!User_model::is_logged()) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH, [], 403);
         }
         if (empty($type) || is_null($id) || !intval($id)) {
             return $this->response_error(CI_Core::RESPONSE_GENERIC_WRONG_PARAMS);
@@ -230,7 +245,7 @@ class Main_page extends MY_Controller
     public function user_transactions()
     {
         if (!User_model::is_logged()) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH, [], 403);
         }
 
         App::get_ci()->load->model('Transaction_model');
@@ -243,7 +258,7 @@ class Main_page extends MY_Controller
     public function user_boosterpacks()
     {
         if (!User_model::is_logged()) {
-            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH);
+            return $this->response_error(CI_Core::RESPONSE_GENERIC_NEED_AUTH, [], 403);
         }
 
         App::get_ci()->load->model('Users_boosterpack_model');
